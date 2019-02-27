@@ -11,23 +11,30 @@ class AccountRepository[F[_]](private val storage: CMap[FUUID, Account])(implici
 
   def addAccount(template: AccountTemplate): F[Account] = for {
     id <- FUUID.randomFUUID
-    account = Account(id, template.name, template.amount)
+    account = createAccount(id, template)
     _ <- E.delay {
       storage.put(id, account)
     }
   } yield account
 
   def getAccount(id: FUUID): F[Option[Account]] = E.delay {
-      storage.get(id)
-    }
+    storage.get(id)
+  }
+
+  def getAccounts: F[Seq[Account]] = E.delay {
+    storage.values.toSeq
+  }
 
   def updateAccounts(account1: Account, account2: Account): F[Unit] = E.delay {
     storage.+=((account1.id, account1), (account2.id, account2))
   }
+
+  private def createAccount(id: FUUID, template: AccountTemplate) =
+    Account(id, template.name, template.amount)
 }
 
 object AccountRepository {
-  def init[F[_]](implicit E: Effect[F]): IO[AccountRepository[F]] = generate[IO].map { storage =>
+  def init[F[_]](implicit E: Effect[F]): IO[AccountRepository[F]] = initialStorage[IO].map { storage =>
     AccountRepository(storage)
   }
 
@@ -35,7 +42,7 @@ object AccountRepository {
     new AccountRepository[F](storage)
   }
 
-  private def generate[F[_]](implicit E: Effect[F]) = for {
+  private def initialStorage[F[_]](implicit E: Effect[F]) = for {
     id1 <- FUUID.randomFUUID
     id2 <- FUUID.randomFUUID
     account1 = Account(id1, "John Doe", BigDecimal(100.00))
