@@ -1,0 +1,10 @@
+dist/*
+target/
+project/plugins/project/
+.cache
+.lib/
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
