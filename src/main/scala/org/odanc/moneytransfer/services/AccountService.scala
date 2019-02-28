@@ -3,6 +3,7 @@ package org.odanc.moneytransfer.services
 import cats.effect.Effect
 import cats.implicits._
 import io.chrisdavenport.fuuid.circe._
+import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.circe._
@@ -16,8 +17,14 @@ class AccountService[F[_]] private(private val repository: AccountRepository[F])
 
     case GET -> Root / "accounts" =>
       repository.getAccounts.flatMap {
-        case Seq() => E.pure(Response.notFound[F])
-        case accounts => Response(status = Ok).withBody(accounts.asJson)
+        case Seq() => E.pure(Response(NoContent).withEmptyBody)
+        case accounts => Response(Ok).withBody(accounts.asJson)
+      }
+
+    case GET -> Root / "accounts" / FUUIDVar(id) =>
+      repository.getAccount(id) flatMap {
+        case Some(account) => Response(Ok).withBody(account.asJson)
+        case None => E.pure(Response(NotFound).withEmptyBody)
       }
   }
 }
