@@ -48,11 +48,11 @@ object AccountRepository {
   private def initialStorage[F[_]](implicit E: Effect[F]) = for {
     id1 <- FUUID.randomFUUID
     id2 <- FUUID.randomFUUID
-    account1 <- createAccount(id1, "John Doe", "100.00")
-    account2 <- createAccount(id2, "Jane Doe", "50.00")
+    account1 <- createAccount(id1, "John Doe", BigDecimal("100.00"))
+    account2 <- createAccount(id2, "Jane Doe", BigDecimal("50.00"))
   } yield TrieMap(id1 -> account1, id2 -> account2)
 
-  private def createAccount[F[_]](id: FUUID, name: String, amount: String)(implicit E: Effect[F]) = E.pure {
-    Account(id, name, BigDecimal(amount))
+  private def createAccount[F[_]](id: FUUID, name: String, amount: BigDecimal)(implicit E: Effect[F]) = E.pure {
+    Account(id, name, amount)
   }
 }
