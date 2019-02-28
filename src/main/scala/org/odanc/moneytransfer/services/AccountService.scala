@@ -10,7 +10,7 @@ import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{HttpService, Response}
-import org.odanc.moneytransfer.models.AccountTemplate
+import org.odanc.moneytransfer.models.{AccountTemplate, Transaction}
 import org.odanc.moneytransfer.repository.AccountRepository
 
 class AccountService[F[_]] private(private val repository: AccountRepository[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
@@ -36,6 +36,11 @@ class AccountService[F[_]] private(private val repository: AccountRepository[F])
         }
       }.handleErrorWith {
         case _: NumberFormatException => BadRequest("Amount is not numeric".asJson)
+      }
+
+    case request @ POST -> Root / "transaction" =>
+      request.decode[Transaction] { transaction =>
+        Created(transaction.asJson)
       }
   }
 }
