@@ -6,9 +6,11 @@ import io.chrisdavenport.fuuid.circe._
 import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe.generic.auto._
 import io.circe.syntax._
-import org.http4s.circe._
+import org.http4s.circe.CirceEntityDecoder._
+import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{HttpService, Response}
+import org.odanc.moneytransfer.models.AccountTemplate
 import org.odanc.moneytransfer.repository.AccountRepository
 
 class AccountService[F[_]] private(private val repository: AccountRepository[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
@@ -25,6 +27,15 @@ class AccountService[F[_]] private(private val repository: AccountRepository[F])
       repository.getAccount(id) flatMap {
         case Some(account) => Response(Ok).withBody(account.asJson)
         case None => E.pure(Response(NotFound).withEmptyBody)
+      }
+
+    case request @ POST -> Root / "accounts" =>
+      request.decode[AccountTemplate] { template =>
+        repository.addAccount(template) flatMap { account =>
+          Created(account.asJson)
+        }
+      }.handleErrorWith {
+        case _: NumberFormatException => BadRequest("Amount is not numeric".asJson)
       }
   }
 }
