@@ -11,7 +11,7 @@ class AccountRepository[F[_]] private(private val storage: CMap[FUUID, Account])
 
   def addAccount(template: AccountTemplate): F[Account] = for {
     id <- FUUID.randomFUUID
-    account = createAccount(id, template)
+    account <- createAccount(id, template)
     _ <- E.delay {
       storage.put(id, account)
     }
@@ -30,7 +30,7 @@ class AccountRepository[F[_]] private(private val storage: CMap[FUUID, Account])
   }
 
   private def createAccount(id: FUUID, template: AccountTemplate) =
-    Account(id, template.name, template.amount)
+    AccountRepository.createAccount(id, template.name, template.amount)
 }
 
 
@@ -48,7 +48,11 @@ object AccountRepository {
   private def initialStorage[F[_]](implicit E: Effect[F]) = for {
     id1 <- FUUID.randomFUUID
     id2 <- FUUID.randomFUUID
-    account1 = Account(id1, "John Doe", BigDecimal(100.00))
-    account2 = Account(id2, "Jane Doe", BigDecimal(50.00))
+    account1 <- createAccount(id1, "John Doe", "100.00")
+    account2 <- createAccount(id2, "Jane Doe", "50.00")
   } yield TrieMap(id1 -> account1, id2 -> account2)
+
+  private def createAccount[F[_]](id: FUUID, name: String, amount: String)(implicit E: Effect[F]) = E.pure {
+    Account(id, name, BigDecimal(amount))
+  }
 }
