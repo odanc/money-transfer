@@ -7,7 +7,7 @@ import org.odanc.moneytransfer.models.{Account, AccountTemplate}
 
 import scala.collection.concurrent.{TrieMap, Map => CMap}
 
-class AccountRepository[F[_]](private val storage: CMap[FUUID, Account])(implicit E: Effect[F]) {
+class AccountRepository[F[_]] private(private val storage: CMap[FUUID, Account])(implicit E: Effect[F]) {
 
   def addAccount(template: AccountTemplate): F[Account] = for {
     id <- FUUID.randomFUUID
@@ -33,7 +33,10 @@ class AccountRepository[F[_]](private val storage: CMap[FUUID, Account])(implici
     Account(id, template.name, template.amount)
 }
 
+
+
 object AccountRepository {
+
   def init[F[_]](implicit E: Effect[F]): IO[AccountRepository[F]] = initialStorage[IO].map { storage =>
     AccountRepository(storage)
   }
