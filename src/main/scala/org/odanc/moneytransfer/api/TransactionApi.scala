@@ -1,4 +1,4 @@
-package org.odanc.moneytransfer.services
+package org.odanc.moneytransfer.api
 
 import cats.effect.Effect
 import io.chrisdavenport.fuuid.circe._
@@ -22,6 +22,8 @@ class TransactionApi[F[_]] private(private val repository: AccountRepository[F])
       }
   }
 }
+
+
 
 object TransactionApi {
 
