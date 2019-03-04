@@ -1,49 +1,42 @@
 package org.odanc.moneytransfer.repository
 
-import cats.effect.{Effect, IO}
+import cats.effect.Effect
 import cats.implicits._
 import io.chrisdavenport.fuuid.FUUID
-import org.odanc.moneytransfer.models.{Account, AccountTemplate}
+import org.odanc.moneytransfer.models.Account
 
 import scala.collection.concurrent.{TrieMap, Map => CMap}
 
 class AccountRepository[F[_]] private(private val storage: CMap[FUUID, Account])(implicit E: Effect[F]) {
 
-  def addAccount(template: AccountTemplate): F[Account] = for {
-    id <- FUUID.randomFUUID
-    account <- createAccount(id, template)
-    _ <- E.delay {
-      storage.put(id, account)
-    }
-  } yield account
+  def addAccount(account: Account): F[Option[Account]] = E.delay {
+    storage.put(account.id, account)
+  }
 
   def getAccount(id: FUUID): F[Option[Account]] = E.delay {
     storage.get(id)
   }
 
-  def getAccounts: F[Seq[Account]] = E.delay {
-    storage.values.toSeq
+  def getAccounts: F[Iterable[Account]] = E.delay {
+    storage.values
   }
 
   def updateAccounts(account1: Account, account2: Account): F[Unit] = E.delay {
     storage.+=((account1.id, account1), (account2.id, account2))
   }
-
-  private def createAccount(id: FUUID, template: AccountTemplate) =
-    AccountRepository.createAccount(id, template.name, template.amount)
 }
 
 
 
 object AccountRepository {
 
-  def init[F[_]](implicit E: Effect[F]): IO[AccountRepository[F]] = initialStorage[IO].map { storage =>
-    AccountRepository(storage)
-  }
+  def init[F[_]](implicit E: Effect[F]): F[AccountRepository[F]] =
+    initialStorage[F] map { storage =>
+      AccountRepository(storage)
+    }
 
-  def apply[F[_]](storage: CMap[FUUID, Account])(implicit E: Effect[F]): AccountRepository[F] = {
+  def apply[F[_]](storage: CMap[FUUID, Account])(implicit E: Effect[F]): AccountRepository[F] =
     new AccountRepository[F](storage)
-  }
 
   private def initialStorage[F[_]](implicit E: Effect[F]) = for {
     id1 <- FUUID.randomFUUID
@@ -52,7 +45,6 @@ object AccountRepository {
     account2 <- createAccount(id2, "Jane Doe", BigDecimal("50.00"))
   } yield TrieMap(id1 -> account1, id2 -> account2)
 
-  private def createAccount[F[_]](id: FUUID, name: String, amount: BigDecimal)(implicit E: Effect[F]) = E.pure {
-    Account(id, name, amount)
-  }
+  private def createAccount[F[_]](id: FUUID, name: String, amount: BigDecimal)(implicit E: Effect[F]) =
+    E.pure(Account(id, name, amount))
 }

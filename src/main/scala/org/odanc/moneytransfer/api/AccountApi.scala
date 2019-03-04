@@ -10,33 +10,33 @@ import org.http4s.HttpService
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl.Http4sDsl
-import org.odanc.moneytransfer.models.AccountTemplate
-import org.odanc.moneytransfer.repository.AccountRepository
+import org.odanc.moneytransfer.models.{AccountTemplate, NegativeAmountError, NotFoundError}
+import org.odanc.moneytransfer.services.AccountService
 
-class AccountApi[F[_]] private(private val repository: AccountRepository[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
+class AccountApi[F[_]] private(private val service: AccountService[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
   private val ACCOUNTS = "accounts"
 
-  private val service: HttpService[F] = HttpService[F] {
+  private val createApi: HttpService[F] = HttpService[F] {
 
     case GET -> Root / ACCOUNTS =>
-      repository.getAccounts.flatMap {
+      service.getAccounts flatMap {
         case Seq() => NoContent()
         case accounts => Ok(accounts.asJson)
       }
 
     case GET -> Root / ACCOUNTS / FUUIDVar(id) =>
-      repository.getAccount(id) flatMap {
-        case Some(account) => Ok(account.asJson)
-        case None => NotFound()
+      service.getAccount(id) flatMap { maybeFound =>
+        maybeFound.fold(NotFound(NotFoundError(id))) { found =>
+          Ok(found.asJson)
+        }
       }
 
     case request @ POST -> Root / ACCOUNTS =>
       request.decode[AccountTemplate] { template =>
-        repository.addAccount(template) flatMap { account =>
+        if (template.amount < 0) BadRequest(NegativeAmountError())
+        else service.addAccount(template) flatMap { account =>
           Created(account.asJson)
         }
-      }.handleErrorWith {
-        case _: NumberFormatException => BadRequest("Amount is not numeric".asJson)
       }
   }
 }
@@ -45,6 +45,6 @@ class AccountApi[F[_]] private(private val repository: AccountRepository[F])(imp
 
 object AccountApi {
 
-  def apply[F[_]](repository: AccountRepository[F])(implicit E: Effect[F]): HttpService[F] =
-    new AccountApi[F](repository).service
+  def apply[F[_]](service: AccountService[F])(implicit E: Effect[F]): HttpService[F] =
+    new AccountApi[F](service).createApi
 }
