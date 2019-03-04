@@ -14,6 +14,8 @@ class AccountService[F[_]] private(private val repository: AccountRepository[F])
     _ <- repository.addAccount(newAccount)
   } yield newAccount
 
+  def addAccount(account: Account): F[Option[Account]] = repository.addAccount(account)
+
   def getAccount(id: FUUID): F[Option[Account]] = repository.getAccount(id)
 
   def getAccounts: F[Iterable[Account]] = repository.getAccounts
