@@ -20,10 +20,6 @@ class AccountRepository[F[_]] private(private val storage: CMap[FUUID, Account])
   def getAccounts: F[Iterable[Account]] = E.delay {
     storage.values
   }
-
-  def updateAccounts(account1: Account, account2: Account): F[Unit] = E.delay {
-    storage.+=((account1.id, account1), (account2.id, account2))
-  }
 }
 
 
