@@ -2,24 +2,12 @@ package org.odanc.moneytransfer.models
 
 import io.chrisdavenport.fuuid.FUUID
 import io.chrisdavenport.fuuid.circe._
-import io.circe.Json
-import io.circe.generic.auto._
-import io.circe.syntax._
 
-case class Error(message: String)
+trait Error
 
-object NotFoundError {
-  def apply(id: FUUID): Json = Error(s"Account with id $id doesn't exist").asJson
-}
+case class NotFoundError(id: FUUID) extends Error
+case class NotEnoughAmountError(id: FUUID) extends Error
+case object NonPositiveAmountError extends Error
+case object SameAccountError extends Error
 
-object NegativeAmountError {
-  def apply(): Json = Error("Can't create account with negative amount").asJson
-}
-
-object NonPositiveAmountError {
-  def apply(): Json = Error("Amount can't be zero or negative").asJson
-}
-
-object SameAccountError {
-  def apply(): Json = Error("Transaction to the same account is not allowed").asJson
-}
+case class ErrorMessage(message: String)
