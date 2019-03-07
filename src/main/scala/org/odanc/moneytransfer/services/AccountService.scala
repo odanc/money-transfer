@@ -20,6 +20,9 @@ class AccountService[F[_]] private(private val repository: AccountRepository[F])
 
   def getAccounts: F[Iterable[Account]] = repository.getAccounts
 
+  def updateAccount(oldAccount: Account, newAccount: Account): F[Unit] =
+    repository.replaceAccount(oldAccount, newAccount)
+
   private def createAccount(id: FUUID, template: AccountTemplate) =
     E.pure(Account(id, template.name, template.amount))
 }

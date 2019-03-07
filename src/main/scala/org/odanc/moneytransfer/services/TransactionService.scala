@@ -28,16 +28,18 @@ class TransactionService[F[_]] private(private val service: AccountService[F])(i
   }
 
   def executeTransaction(transaction: Transaction): F[Either[Error, Transaction]] = {
-    val transferAmountTask = for {
-      semaphore <- Semaphore[IO](1)
-      _ <- semaphore.decrement
-      transferAmount <- IO {
-        transferAmount(transaction)
-      }
-      _ <- semaphore.increment
-    } yield transferAmount
+//    val transferAmountTask = for {
+//      semaphore <- Semaphore[IO](1)
+//      _ <- semaphore.decrement
+//      transferAmount <- IO {
+//        transferAmount(transaction)
+//      }
+//      _ <- semaphore.increment
+//    } yield transferAmount
+//
+//    transferAmountTask.unsafeRunSync()
 
-    transferAmountTask.unsafeRunSync()
+    transferAmount(transaction)
   }
 
   private def transferAmount(transaction: Transaction) = {
@@ -55,8 +57,16 @@ class TransactionService[F[_]] private(private val service: AccountService[F])(i
         val fromAmount = fromAccount.amount
         val toAmount = toAccount.amount
 
-        service.addAccount(fromAccount.copy(amount = fromAmount - amount))
-        service.addAccount(toAccount.copy(amount = toAmount + amount))
+//        service.addAccount(fromAccount.copy(amount = fromAmount - amount))
+//        service.addAccount(toAccount.copy(amount = toAmount + amount))
+        val newFromAccount = fromAccount.copy(name = "Kek")
+        val newToAccount = toAccount.copy(name = "Lol")
+
+//        service.addAccount(newFromAccount)
+//        service.addAccount(newToAccount)
+
+        service.updateAccount(fromAccount, newFromAccount)
+        service.updateAccount(toAccount, newToAccount)
 
         transaction.asRight[Error].pure
       }
