@@ -46,13 +46,59 @@ class TransactionApi[F[_]] private(private val service: TransactionService[F])(i
             }
             BadRequest(errorMessages.asJson)
 
-          case Valid(validTransaction) =>
-            service.processTransaction(validTransaction) flatMap {
-              case Left(error) => error match {
-                case NotFoundError(id) => NotFound(ErrorMessage(s"Account $id doesn't exist").asJson)
-                case NotEnoughAmountError(id) => PreconditionFailed(ErrorMessage(s"Account $id doesn't have enough amount").asJson)
+
+          case Valid(_) =>
+            val accountService = service.service
+
+            val check1 = accountService.getAccount(from) flatMap { isFromFound =>
+              isFromFound.fold(E.pure(NotFoundError(from).invalidNec[Account])) { fromFound =>
+                E.pure(fromFound.validNec)
               }
-              case Right(_) => Ok(transaction.asJson)
+            }
+
+            val check2 = accountService.getAccount(to) flatMap { isToFound =>
+              isToFound.fold(E.pure(NotFoundError(to).invalidNec[Account])) { toFound =>
+                E.pure(toFound.validNec)
+              }
+            }
+
+            val checked: F[ValidatedNec[NotFoundError, (Account, Account)]] = check1 flatMap { ch1 =>
+              check2 flatMap { ch2 =>
+                E.pure {
+                  (ch1, ch2) mapN { (fromFound, toFound) =>
+                    (fromFound, toFound)
+                  }
+                }
+              }
+            }
+
+            checked flatMap {
+              case Invalid(errors) =>
+                val errorMessages = errors.toList map { error =>
+                  ErrorMessage(s"Account ${error.id} doesn't exist")
+                }
+                NotFound(errorMessages.asJson)
+
+              case Valid((fromAccount, toAccount)) =>
+                val fromAmount = fromAccount.amount
+
+                if (fromAmount < amount) PreconditionFailed("notEnoughMoney".asJson)
+                else {
+                  val toAmount = toAccount.amount
+
+                  val newFromAccount = fromAccount.copy(amount = fromAmount - amount)
+                  val newToAccount = toAccount.copy(amount = toAmount + amount)
+
+//                  accountService.addAccount(newFromAccount) flatMap { _ =>
+//                    accountService.addAccount(newToAccount) flatMap { _ =>
+//                      Ok("cool".asJson)
+//                    }
+//                  }
+
+                  accountService.addAccounts(newFromAccount, newToAccount) flatMap { _ =>
+                    Ok(transaction.asJson)
+                  }
+                }
             }
         }
       }

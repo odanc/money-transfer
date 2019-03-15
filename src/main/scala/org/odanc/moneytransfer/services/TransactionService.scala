@@ -7,7 +7,7 @@ import org.odanc.moneytransfer.models.{Error, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TransactionService[F[_]] private(private val service: AccountService[F])(implicit E: Effect[F]) {
+class TransactionService[F[_]] private(val service: AccountService[F])(implicit E: Effect[F]) {
 
   def processTransaction(transaction: Transaction): F[Either[Error, Transaction]] = {
     val from = transaction.from
@@ -62,11 +62,13 @@ class TransactionService[F[_]] private(private val service: AccountService[F])(i
         val newFromAccount = fromAccount.copy(name = "Kek")
         val newToAccount = toAccount.copy(name = "Lol")
 
+        service.addAccount(AccountTemplate("Kek", BigDecimal("1000.01")))
+
 //        service.addAccount(newFromAccount)
 //        service.addAccount(newToAccount)
 
-        service.updateAccount(fromAccount, newFromAccount)
-        service.updateAccount(toAccount, newToAccount)
+//        service.updateAccount(fromAccount, newFromAccount)
+//        service.updateAccount(toAccount, newToAccount)
 
         transaction.asRight[Error].pure
       }

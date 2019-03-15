@@ -13,17 +13,16 @@ class AccountRepository[F[_]] private(private val storage: CMap[FUUID, Account])
     storage.put(account.id, account)
   }
 
+  def addAccounts(first: Account, second: Account): F[Unit] = E.delay {
+    storage += (first.id -> first, second.id -> second)
+  }
+
   def getAccount(id: FUUID): F[Option[Account]] = E.delay {
     storage.get(id)
   }
 
   def getAccounts: F[Iterable[Account]] = E.delay {
     storage.values
-  }
-
-  def replaceAccount(oldAccount: Account, newAccount: Account): F[Unit] = E.delay {
-    storage += (newAccount.id -> newAccount)
-//    storage.replace(oldAccount.id, oldAccount, newAccount)
   }
 }
 
