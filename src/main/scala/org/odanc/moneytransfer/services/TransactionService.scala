@@ -9,8 +9,20 @@ import org.odanc.moneytransfer.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+/**
+  * A service for processing amount transactions between accounts
+  *
+  * @param service account service
+  */
 class TransactionService[F[_]] private(private val service: AccountService[F])(implicit E: Effect[F]) {
 
+  /**
+    * Validates if given ids mathes for existing accounts
+    *
+    * @param fromId account's id
+    * @param toId account's id
+    * @return either an error containing all not existent accounts or a pair of retrieved accounts
+    */
   def validateAccounts(fromId: FUUID, toId: FUUID): F[ValidatedNec[NotFoundError, (Account, Account)]] = {
     val fromNotFound = E.pure(NotFoundError(fromId).invalidNec[Account])
     val toNotFound = E.pure(NotFoundError(toId).invalidNec[Account])
@@ -31,6 +43,15 @@ class TransactionService[F[_]] private(private val service: AccountService[F])(i
     }
   }
 
+  /**
+    * Performs a given amount transfer between given accounts
+    *
+    * @param fromAccount account to tranfer amount from
+    * @param toAccount account to transfer amount to
+    * @param amount amount
+    * @return either an error describing an account doesn't have enough amount to transfer
+    *         or an account itself on transfer success
+    */
   def transferAmount(fromAccount: Account, toAccount: Account, amount: BigDecimal): F[Either[NotEnoughAmountError, Account]] = {
     val transactionTask = for {
       semaphore <- Semaphore[IO](1)
@@ -64,6 +85,12 @@ class TransactionService[F[_]] private(private val service: AccountService[F])(i
 
 object TransactionService {
 
+  /**
+    * Creates a new transaction service
+    *
+    * @param service account service
+    * @return transaction service
+    */
   def apply[F[_]](service: AccountService[F])(implicit E: Effect[F]): TransactionService[F] =
     new TransactionService[F](service)
 }

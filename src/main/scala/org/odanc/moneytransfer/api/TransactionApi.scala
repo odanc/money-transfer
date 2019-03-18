@@ -15,11 +15,29 @@ import org.http4s.dsl.Http4sDsl
 import org.odanc.moneytransfer.models._
 import org.odanc.moneytransfer.services.TransactionService
 
+/**
+  * Provides an endpoint for creating and executing amount transaction between accounts
+  *
+  * @param service transaction service
+  */
 class TransactionApi[F[_]] private(private val service: TransactionService[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
   private val TRANSACTIONS = "transactions"
 
   private val createApi: HttpService[F] = HttpService[F] {
 
+    /**
+      * Matches for POST /transactions
+      *
+      * Accepts json body
+      * {
+      *   "from": "id1",
+      *   "to": "id2",
+      *   "amount": number
+      * }
+      *
+      * Creates and executes an amount transactions between given accounts.
+      * If no errors arise, returns an input json as a success flag
+      */
     case request @ POST -> Root / TRANSACTIONS =>
       request.decode[Transaction] { transaction =>
         val amount = transaction.amount
@@ -77,6 +95,12 @@ class TransactionApi[F[_]] private(private val service: TransactionService[F])(i
 
 object TransactionApi {
 
+  /**
+    * Creates a provider for transactions api endpoint
+    *
+    * @param service transaction service
+    * @return transaction api provider
+    */
   def apply[F[_]](service: TransactionService[F])(implicit E: Effect[F]): HttpService[F] =
     new TransactionApi[F](service).createApi
 }
