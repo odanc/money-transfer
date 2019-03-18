@@ -23,14 +23,14 @@ class TransactionApi[F[_]] private(private val service: TransactionService[F])(i
     case request @ POST -> Root / TRANSACTIONS =>
       request.decode[Transaction] { transaction =>
         val amount = transaction.amount
-        val from = transaction.from
-        val to = transaction.to
+        val fromId = transaction.from
+        val toId = transaction.to
 
         val validatePositiveAmount: ValidatedNec[Error, BigDecimal] =
           if (amount > 0) amount.validNec else NonPositiveAmountError.invalidNec
 
         val validateSameIds: ValidatedNec[Error, (FUUID, FUUID)] =
-          if (from =!= to) (from, to).validNec else SameAccountError.invalidNec
+          if (fromId =!= toId) (fromId, toId).validNec else SameAccountError.invalidNec
 
         val validatedTransaction =
           (validatePositiveAmount, validateSameIds) mapN { (amount, fromTo) =>
@@ -48,31 +48,10 @@ class TransactionApi[F[_]] private(private val service: TransactionService[F])(i
 
 
           case Valid(_) =>
-            val accountService = service.service
+            val validatedAccounts = service.validateAccounts(fromId, toId)
 
-            val check1 = accountService.getAccount(from) flatMap { isFromFound =>
-              isFromFound.fold(E.pure(NotFoundError(from).invalidNec[Account])) { fromFound =>
-                E.pure(fromFound.validNec)
-              }
-            }
+            validatedAccounts flatMap {
 
-            val check2 = accountService.getAccount(to) flatMap { isToFound =>
-              isToFound.fold(E.pure(NotFoundError(to).invalidNec[Account])) { toFound =>
-                E.pure(toFound.validNec)
-              }
-            }
-
-            val checked: F[ValidatedNec[NotFoundError, (Account, Account)]] = check1 flatMap { ch1 =>
-              check2 flatMap { ch2 =>
-                E.pure {
-                  (ch1, ch2) mapN { (fromFound, toFound) =>
-                    (fromFound, toFound)
-                  }
-                }
-              }
-            }
-
-            checked flatMap {
               case Invalid(errors) =>
                 val errorMessages = errors.toList map { error =>
                   ErrorMessage(s"Account ${error.id} doesn't exist")
@@ -80,25 +59,14 @@ class TransactionApi[F[_]] private(private val service: TransactionService[F])(i
                 NotFound(errorMessages.asJson)
 
               case Valid((fromAccount, toAccount)) =>
-                val fromAmount = fromAccount.amount
+                service.transferAmount(fromAccount, toAccount, amount) flatMap {
 
-                if (fromAmount < amount) PreconditionFailed("notEnoughMoney".asJson)
-                else {
-                  val toAmount = toAccount.amount
+                  case Left(NotEnoughAmountError(id)) =>
+                    val errorMessage = ErrorMessage(s"Account $id doesn't have enough amount")
+                    PreconditionFailed(errorMessage.asJson)
 
-                  val newFromAccount = fromAccount.copy(amount = fromAmount - amount)
-                  val newToAccount = toAccount.copy(amount = toAmount + amount)
-
-//                  accountService.addAccount(newFromAccount) flatMap { _ =>
-//                    accountService.addAccount(newToAccount) flatMap { _ =>
-//                      Ok("cool".asJson)
-//                    }
-//                  }
-
-                  accountService.addAccounts(newFromAccount, newToAccount) flatMap { _ =>
-                    Ok(transaction.asJson)
-                  }
-                }
+                  case Right(_) => Ok(transaction.asJson)
+              }
             }
         }
       }
