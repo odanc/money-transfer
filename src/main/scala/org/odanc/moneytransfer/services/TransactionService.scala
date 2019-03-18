@@ -75,7 +75,8 @@ class TransactionService[F[_]] private(private val service: AccountService[F])(i
       val newToAccount = toAccount.copy(amount = toAmount + amount)
 
       service.addAccounts(newFromAccount, newToAccount) flatMap { _ =>
-        Either.right[NotEnoughAmountError, Account](newFromAccount).pure
+        val updatedAccount = Either.right[NotEnoughAmountError, Account](newFromAccount)
+        updatedAccount.pure
       }
     }
   }
