@@ -45,11 +45,11 @@ class AccountSpec extends Specification {
   }
 
   "POST /accounts" >> {
-    "should not create an account" >> {
-      shouldNotCreateAccount()
-    }
     "should create an account" >> {
       shouldCreateAccount()
+    }
+    "should not create an account" >> {
+      shouldNotCreateAccount()
     }
   }
 
@@ -110,10 +110,6 @@ class AccountSpec extends Specification {
     val response = AccountApi[IO](accountService).orNotFound(postInvalidAccount).unsafeRunSync()
 
     response.status === BadRequest
-
-    val allAccountsResponse = AccountApi[IO](accountService).orNotFound(getAllAccounts).unsafeRunSync()
-
-    allAccountsResponse.as[Seq[Account]].unsafeRunSync().size === 2
   }
 
   private def shouldCreateAccount() = {
