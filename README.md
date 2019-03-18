@@ -92,4 +92,4 @@ or
 ```
 
 ## Intro
-Upon the start application generates 2 random account for convinience which can be retrieved by endpoint mentioned above.
+Upon the start application generates 2 random accounts for convinience which can be retrieved by endpoint mentioned above.
