@@ -41,8 +41,8 @@ REST web-service for transfering money implemented in Scala using functional sty
 ###### Request `POST` to `/api/accounts` with body, e.g.:
 ```json
 {
-	"name": "Mister X",
-	"amount": 20.19
+    "name": "Mister X",
+    "amount": 20.19
 }
 ```
 ###### Response `HTTP 201 CREATED` with body, e.g.:
@@ -58,17 +58,17 @@ REST web-service for transfering money implemented in Scala using functional sty
 ###### Request `POST` to `/api/transactions` with body, e.g.:
 ```json
 {
-	"from": "dca85eeb-b03e-4ad3-880f-8c38f28931cb",
-	"to": "a3af0bda-4fc8-4e04-988a-c6ad992a2835",
-	"amount": 50
+    "from": "dca85eeb-b03e-4ad3-880f-8c38f28931cb",
+    "to": "a3af0bda-4fc8-4e04-988a-c6ad992a2835",
+    "amount": 50
 }
 ```
 ###### Response `HTTP 200 OK` with body, e.g.:
 ```json
 {
-	"from": "dca85eeb-b03e-4ad3-880f-8c38f28931cb",
-	"to": "a3af0bda-4fc8-4e04-988a-c6ad992a2835",
-	"amount": 50
+    "from": "dca85eeb-b03e-4ad3-880f-8c38f28931cb",
+    "to": "a3af0bda-4fc8-4e04-988a-c6ad992a2835",
+    "amount": 50
 }
 ```
 
