@@ -2,7 +2,7 @@
 REST web-service for transfering money implemented in Scala using functional style
 
 ## Usage
-1. `sbt run` for starting application
+1. `sbt run` for starting application (it will use port 8080)
 2. `sbt test` for running tests
 3. `sbt assembly` for building an executable single jar-file
 
@@ -73,7 +73,8 @@ REST web-service for transfering money implemented in Scala using functional sty
 ```
 
 ##### Errors
-Business errors (not technical ones, e.g. parsing errors, as they are processed by underlying http-library) errors are returned as a json response with descriptive `message`, e.g.:
+Business errors (not technical ones, e.g. parsing errors, they are processed by underlying
+http-library) are returned as a json response with descriptive `message`, e.g.:
 ```json
 {
     "message": "Account dca85eeb-b03e-4ad3-880f-8c38f28931cb doesn't have enough amount"
@@ -90,6 +91,11 @@ or
     }
 ]
 ```
+Such responses are marked with corresponding 4xx `HTTP` status codes.
 
 ## Intro
-Upon the start application generates 2 random accounts for convinience which can be retrieved by endpoint mentioned above.
+Upon the start application will generate 2 random accounts for convinience.
+They can be retrieved by requesting `GET` `/api/accounts`.
+Domain models are remained as simple as possible for clarity purposes
+and no "real world" rules are applied: no strict checks for money transfers possibility,
+no constraints for amount values, no transactions scheduling or states.
