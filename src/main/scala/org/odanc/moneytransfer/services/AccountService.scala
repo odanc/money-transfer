@@ -11,7 +11,7 @@ import org.odanc.moneytransfer.repository.AccountRepository
   *
   * @param repository an account repository
   */
-class AccountService[F[_]] private(private val repository: AccountRepository[F])(implicit E: Effect[F]) {
+class AccountService[F[_]] (private val repository: AccountRepository[F])(implicit E: Effect[F]) {
 
   /**
     * Creates and stores a new account crafted from the given template in the repository

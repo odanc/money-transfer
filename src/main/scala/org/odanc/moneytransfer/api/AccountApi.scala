@@ -18,7 +18,7 @@ import org.odanc.moneytransfer.services.AccountService
   *
   * @param service account service
   */
-class AccountApi[F[_]] private(private val service: AccountService[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
+class AccountApi[F[_]] (private val service: AccountService[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
   private val ACCOUNTS = "accounts"
 
   private val createApi: HttpService[F] = HttpService[F] {
@@ -28,10 +28,7 @@ class AccountApi[F[_]] private(private val service: AccountService[F])(implicit 
       * Retrieves a list of all accounts
       */
     case GET -> Root / ACCOUNTS =>
-      service.getAccounts flatMap {
-        case Seq() => NoContent()
-        case accounts => Ok(accounts.asJson)
-      }
+      service.getAccounts flatMap (accounts => Ok(accounts.asJson))
 
     /**
       * Matches for GET /accounts/{id}

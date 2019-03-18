@@ -20,7 +20,7 @@ import org.odanc.moneytransfer.services.TransactionService
   *
   * @param service transaction service
   */
-class TransactionApi[F[_]] private(private val service: TransactionService[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
+class TransactionApi[F[_]] (private val service: TransactionService[F])(implicit E: Effect[F]) extends Http4sDsl[F] {
   private val TRANSACTIONS = "transactions"
 
   private val createApi: HttpService[F] = HttpService[F] {

@@ -12,7 +12,7 @@ import scala.collection.concurrent.{TrieMap, Map => CMap}
   *
   * @param storage an actual storage for holding accounts
   */
-class AccountRepository[F[_]] private(private val storage: CMap[FUUID, Account])(implicit E: Effect[F]) {
+class AccountRepository[F[_]] (private val storage: CMap[FUUID, Account])(implicit E: Effect[F]) {
 
   /**
     * Inserts a given account in the storage

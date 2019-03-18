@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   *
   * @param service account service
   */
-class TransactionService[F[_]] private(private val service: AccountService[F])(implicit E: Effect[F]) {
+class TransactionService[F[_]] (private val service: AccountService[F])(implicit E: Effect[F]) {
 
   /**
     * Validates if given ids mathes for existing accounts
