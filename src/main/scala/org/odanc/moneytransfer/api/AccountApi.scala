@@ -28,7 +28,9 @@ class AccountApi[F[_]] (private val service: AccountService[F])(implicit E: Effe
       * Retrieves a list of all accounts
       */
     case GET -> Root / ACCOUNTS =>
-      service.getAccounts flatMap (accounts => Ok(accounts.asJson))
+      service.getAccounts flatMap { accounts =>
+        Ok(accounts.asJson)
+      }
 
     /**
       * Matches for GET /accounts/{id}
